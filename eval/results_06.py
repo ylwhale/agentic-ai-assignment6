@@ -145,7 +145,10 @@ def update_report(rows: list[dict], headers: list[dict]) -> None:
         report["multiplier"][kind] = round(m["mean_tokens"] / s["mean_tokens"], 3) if s["mean_tokens"] else None
         report["spend_check"][kind] = {
             "spent_more": "yes" if m["mean_tokens"] > s["mean_tokens"] else "no",
-            "spend_raises_score": "yes" if sp["passes"] > s["passes"] else "no",
+            "spend_raises_score": "yes" if (
+                (s["mean_tokens"] > sp["mean_tokens"] and s["passes"] > sp["passes"])
+                or (sp["mean_tokens"] > s["mean_tokens"] and sp["passes"] > s["passes"])
+            ) else "no",
             "one_agent_as_well": "yes" if sp["passes"] >= m["passes"] else "no",
         }
     # Failure categories and topology decisions are interpretive. Do not invent them.
