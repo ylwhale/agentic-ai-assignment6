@@ -30,12 +30,14 @@ class RoleTools:
 
     RETURN_NAME = "return_findings"
 
-    def __init__(self, registry, roles, *, schema=None, disclosure=""):
+    def __init__(self, registry, roles, *, schema=None, disclosure="", issue=None, trace=None):
         self.registry = registry
         self.roles = frozenset(roles)
         self.allowed = {tool_for(r) for r in roles}
         self.schema = schema
         self.disclosure = disclosure
+        self.issue = issue
+        self.trace = trace
         self.calls = []
         self.returned = []
         self._schemas = [s for s in registry.schemas if s["name"] in self.allowed]
@@ -52,8 +54,34 @@ class RoleTools:
 
     def call(self, name, inputs):
         if name == self.RETURN_NAME and self.schema is not None:
+            # Reject inaccurate returns at the tool boundary. Do not silently
+            # rewrite the model's claimed fields: require a corrected return.
+            actual_searched, actual_count = observed_facts(self.calls)
+            problems = schema_errors(inputs, self.schema)
+            if not problems:
+                if inputs["searched"] != actual_searched:
+                    problems.append("searched differs from the actual search queries and read-file paths")
+                if inputs["calls_used"] != actual_count:
+                    problems.append("calls_used differs from the actual registry tool-call count")
+                if self.issue is not None and inputs["result"]["issue"] != self.issue:
+                    problems.append("result.issue differs from the assigned issue")
+            if problems:
+                if self.trace is not None:
+                    self.trace.event("return_rejected", errors=problems,
+                                     actual_searched=actual_searched,
+                                     actual_calls_used=actual_count)
+                correction = (
+                    "Invalid return_findings; no result has been accepted. "
+                    + "; ".join(problems)
+                    + ". Retry return_findings using exactly these observed values: "
+                    + "searched=" + json.dumps(actual_searched)
+                    + ", calls_used=" + str(actual_count)
+                    + ". Do not include the issue ID in searched unless it was literally "
+                      "a search query or read-file path. Do not make further registry calls."
+                )
+                return ToolResult(correction, True, 0.0)
             self.returned.append(inputs)
-            return ToolResult("Return received by the coordinator.", False, 0.0)
+            return ToolResult("Return accepted. Do not call any more tools.", False, 0.0)
         if name not in self.allowed:
             return ToolResult("Forbidden: this worker has no permission to use that tool.", True, 0.0)
         arguments = dict(inputs) if isinstance(inputs, dict) else inputs
@@ -81,7 +109,8 @@ def observed_facts(calls):
 def _one(ctx, coordinator, issue, per_issue, schema, line):
     investigator = ctx.agent(f"investigator-{issue}", parent=coordinator.id)
     writer = ctx.agent(f"writer-{issue}", parent=coordinator.id)
-    investigator_tools = RoleTools(ctx.tools, ("read_issue", "search", "read_file"), schema=schema)
+    investigator_tools = RoleTools(ctx.tools, ("read_issue", "search", "read_file"),
+                                   schema=schema, issue=issue, trace=investigator.trace)
 
     base = load_bounds()
     share_investigate = max(1, int(per_issue * 0.64))

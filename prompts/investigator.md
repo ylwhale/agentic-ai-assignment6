@@ -14,3 +14,11 @@ calls_used is the total count of your actual issue-read, code-search, and
 code-read-file tool calls, including calls that failed. not_searched lists relevant
 areas not examined. could_not_determine lists any unresolved questions.
 Do not guess to fill uncertainty. Return candidate and note uncertainty if needed.
+
+Critical return accuracy: `searched` contains only the literal values passed as
+`query` to the search tool or `path` to the read-file tool; do NOT include the
+issue number, keywords inferred from results, or files you merely saw named in
+search results. `calls_used` counts every actual read-issue, search, and read-file
+call, including errors, but NOT return_findings. If return_findings reports an
+error, use the observed searched/calls_used values from that error to retry.
+Never invent facts, and do not continue registry calls just to fix a count.
