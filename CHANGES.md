@@ -28,3 +28,7 @@ Removals are logged like additions.
 - **Removed:** autonomous merge; pushes to a protected branch
 - **Constrained:** push_commit and post_comment by circumstance; every gated call to a person's answer, and no answer to a hold
 
+## Assignment 6
+- **Added:** an experimental coordinator / investigator / writer topology with structured handoffs and replayable guards on `lab-06-split`; matched-spending S-plus baseline; 72 measured runs, grounded failure analysis, and ADR 0006 on `main`
+- **Removed:** nothing from the single-agent implementation on `main`; the experimental split is not merged
+- **Constrained:** worker tool access, structured return evidence and shared experiment budget in the prototype; production topology to single-agent until the documented accuracy and efficiency revisit criteria are met
