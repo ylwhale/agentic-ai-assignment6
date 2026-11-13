@@ -219,6 +219,21 @@ Both the experimental roles and the S-plus alternative used this same task set a
 
 **Token multipliers.** M/S mean tokens: **0.510x** for single issues and **0.453x** for batches. The lecture's illustrative **15x** is a vendor-reported multi-agent/chat ratio on another workload, not the same M/S comparison, so it is context rather than an apples-to-apples benchmark. The prediction of 1.5x/1.8x *more* tokens was wrong for this implementation: M consumed substantially *fewer* tokens. It was not an unqualified efficiency win because accuracy fell from 14/18 to 9/18 for singles and from 5/6 to 0/6 for batches.
 
+### Per-task grounded passes, token use, and wall-clock time
+
+Each cell shows **passes / 3 runs; mean tokens; mean seconds**, measured from `results/runs_06.jsonl`. These are task-level values, not just arm totals.
+
+| Task | S | M | S-plus |
+|---|---|---|---|
+| `batch-a` | 2/3; 350,551; 33.7s | 0/3; 162,160; 12.3s | 0/3; 149,920; 50.7s |
+| `batch-b` | 3/3; 349,607; 33.8s | 0/3; 154,663; 12.6s | 0/3; 150,374; 48.7s |
+| `one-4402` | 1/3; 63,525; 7.6s | 0/3; 29,661; 7.2s | 0/3; 30,285; 10.9s |
+| `one-4403` | 3/3; 33,408; 6.6s | 0/3; 24,490; 9.0s | 0/3; 25,039; 9.8s |
+| `one-4405` | 3/3; 40,945; 7.0s | 1/3; 27,615; 8.4s | 0/3; 28,251; 8.7s |
+| `one-4406` | 1/3; 70,213; 11.5s | 2/3; 30,837; 9.8s | 0/3; 30,370; 11.6s |
+| `one-4409` | 3/3; 65,396; 12.2s | 3/3; 23,516; 8.6s | 3/3; 24,809; 9.1s |
+| `one-4413` | 3/3; 35,585; 5.2s | 3/3; 21,429; 7.6s | 3/3; 22,025; 9.1s |
+
 ### Did S-plus actually match M spending?
 
 S-plus ran sequential, fresh-context read-only attempts on the same issue and selected an answer by deterministic majority vote before making writes. The runner supplied task-specific M mean tokens with `--match split`; the following are **observed**, not allocated, mean token counts:
